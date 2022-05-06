@@ -6,6 +6,7 @@ import com.superli.qingguo.common.R;
 import com.superli.qingguo.dto.DishDto;
 import com.superli.qingguo.entity.Category;
 import com.superli.qingguo.entity.Dish;
+import com.superli.qingguo.entity.DishFlavor;
 import com.superli.qingguo.entity.Employee;
 import com.superli.qingguo.service.CategoryService;
 import com.superli.qingguo.service.DishFlavorService;
@@ -152,8 +153,27 @@ public class DishController {
         queryWrapper.eq(Dish::getStatus,1);
        queryWrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getCreateTime);
         List<Dish> list = dishService.list(queryWrapper);
-        List<DishDto> list1=null;
-        return R.success(list1);
+        List<DishDto> dishDtolist1 = list.stream().map((item) -> {
+            DishDto dishDto = new DishDto();
+            //给disDto拷贝Dish属性
+            BeanUtils.copyProperties(item, dishDto);
+            Long categoryId = item.getCategoryId();
+            Category category = categoryService.getById(categoryId);
+            String categoryName = category.getName();
+            //disDto添加菜品分类名
+            dishDto.setCategoryName(categoryName);
+            //菜品id
+            Long id = item.getId();
+            LambdaQueryWrapper<DishFlavor> queryWrapper1 = new LambdaQueryWrapper<>();
+            queryWrapper1.eq(DishFlavor::getDishId,id);
+            List<DishFlavor> dishFlavorList = dishFlavorService.list(queryWrapper1);
+            dishDto.setFlavors(dishFlavorList);
+
+            return dishDto;
+        }).collect(Collectors.toList());
+
+        return R.success(dishDtolist1);
     }
 
 }
+

@@ -93,5 +93,14 @@ public class SetmealController {
         return R.success("套餐删除成功");
 
     }
+    @GetMapping("/list")
+    public R<List<Setmeal>> list(Long categoryId){
+        LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Setmeal::getCategoryId,categoryId);
+        queryWrapper.eq(Setmeal::getStatus,1);
+        List<Setmeal> list = setmealService.list(queryWrapper);
+        return R.success(list);
+
+    }
 
 }
