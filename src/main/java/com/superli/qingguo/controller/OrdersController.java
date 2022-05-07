@@ -24,7 +24,7 @@ public class OrdersController {
     @PostMapping("/submit")
     public R<String> submit(@RequestBody Orders orders){
         ordersService.submit(orders);
-        return R.success("结算成功");
+        return R.success("结算 成功");
     }
 
 }
