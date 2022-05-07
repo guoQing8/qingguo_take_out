@@ -8,6 +8,7 @@ import com.superli.qingguo.utils.ValidateCodeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpSession;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Author superli
@@ -27,15 +29,17 @@ import java.util.Map;
 public class UserController {
     @Autowired
     private UserService userService;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 发送手机验证码
      * @param user
-     * @param session
+
      * @return
      */
     @PostMapping("/sendMsg")
-    public R<String> sendMsg(@RequestBody User user, HttpSession session){
+    public R<String> sendMsg(@RequestBody User user){
         //获取手机号
         String phone = user.getPhone();
         if(StringUtils.isNotEmpty(phone)){
@@ -46,7 +50,9 @@ public class UserController {
             //调用xx云提供短信服务API完成短信发送
 
             //需要将生成验证码保存在session中
-            session.setAttribute(phone,code);
+            //session.setAttribute(phone,code);
+            //将生成的验证码缓存在redis中,并且设置有效期5分钟
+            redisTemplate.opsForValue().set(phone,code,5, TimeUnit.MINUTES);
             return R.success("手机短信验证码发送成功");
         }
 
@@ -58,7 +64,7 @@ public class UserController {
     /**
      * 移动端用户登录
      * @param map
-     * @param session
+
      * @return
      */
     @PostMapping("/login")
@@ -69,7 +75,9 @@ public class UserController {
         //获取验证码
         String code = map.get("code").toString();
         //从session中获取保存的验证码
-        Object code1 = session.getAttribute(phone);
+        //Object code1 = session.getAttribute(phone);
+        //从redis缓存中取出验证码
+        Object  code1= redisTemplate.opsForValue().get(phone);
 
 
         //两者一致登录成功
@@ -86,6 +94,8 @@ public class UserController {
 
             }
             session.setAttribute("user",user.getId());
+            //登录成功后删除redis中的缓存验证码
+            redisTemplate.delete(phone);
             return R.success(user);
         }
         else {
