@@ -8,6 +8,7 @@ import com.github.qcloudsms.httpclient.HTTPException;
 import com.superli.qingguo.common.R;
 import com.superli.qingguo.entity.User;
 import com.superli.qingguo.service.UserService;
+import com.superli.qingguo.utils.MessageUtils;
 import com.superli.qingguo.utils.ValidateCodeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -48,8 +49,10 @@ public class UserController {
         //获取手机号
         String phone = user.getPhone();
         if(StringUtils.isNotEmpty(phone)){
-            //生成随机思维验证码
-            String code = ValidateCodeUtils.generateValidateCode(4).toString();
+            MessageUtils messageUtils = new MessageUtils();
+            String code = messageUtils.sendMessage(phone);
+
+
             log.info("code={}",code);
             System.out.println(code);
 //            //调用xx云提供短信服务API完成短信发送
